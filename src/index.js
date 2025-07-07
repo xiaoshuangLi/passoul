@@ -93,7 +93,7 @@ const creater = (options = {}) => {
     throw new Error('Passoul: port or href is required.');
   }
 
-  const socket = io(url);
+  const socket = io(server);
   const promise = createPromise();
   const link = href ? href : `${LOCAL}:${port}`;
 
