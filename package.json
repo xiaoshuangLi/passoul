@@ -1,0 +1,33 @@
+{
+  "name": "passoul",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Passoul allows you to easily share a web service on your local development machine without messing with DNS and firewall settings.",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --inspect src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoshuangLi/passoul.git"
+  },
+  "author": "XiaoshuangLi",
+  "license": "MIT",
+  "bin": {
+    "passoul": "bin/index.js"
+  },
+  "main": "src/index.js",
+  "bugs": {
+    "url": "https://github.com/xiaoshuangLi/passoul/issues"
+  },
+  "homepage": "https://github.com/xiaoshuangLi/passoul#readme",
+  "devDependencies": {
+    "jest": "^30.0.3"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "node-fetch": "^3.3.2",
+    "socket.io-client": "^4.8.1"
+  }
+}
