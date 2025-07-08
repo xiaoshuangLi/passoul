@@ -89,6 +89,22 @@ const createBody = (source = {}) => {
   return body;
 };
 
+const createOptions = (source = {}) => {
+  const {
+    beacon,
+    method,
+    headers,
+    originalUrl,
+  } = source;
+
+  const body = createBody(source);
+  const combined = { headers, method };
+
+  body && Object.assign(combined, { body });
+
+  return combined;
+};
+
 const handleHeaders = (response) => {
   const entries = response?.headers?.entries?.() || [];
 
@@ -150,21 +166,13 @@ const creater = (options = {}) => {
   });
 
   socket.on(CONNECTION.REQUEST, async (source = {}) => {
-    const {
-      beacon,
-      method,
-      headers,
-      originalUrl,
-    } = source;
+    const { beacon, originalUrl } = source;
 
     try {
-      const body = createBody(source);
-      const combined = { headers, method };
-
-      body && Object.assign(combined, { body });
-
       const url = `${link}${originalUrl}`;
-      const fetched = await fetch(url, combined);
+      const options = createOptions(source);
+
+      const fetched = await fetch(url, options);
       const headers = await handleHeaders(fetched);
       const response = await handleResponse(fetched);
 
