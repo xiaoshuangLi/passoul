@@ -89,18 +89,29 @@ const createBody = (source = {}) => {
   return body;
 };
 
+const handleHeaders = (response) => {
+  const entries = response?.headers?.entries?.() || [];
+
+  return entries.reduce((result = {}, entry = []) => {
+    const [key, value] = entry;
+
+    result[key] = value;
+    return result;
+  }, {});
+};
+
 const handleResponse = (response) => {
   const type = response?.headers?.get?.('content-type');
 
   if (type?.includes('text/')) {
-    return response.text();
+    return response?.text?.();
   }
 
   if (type?.includes('/json')) {
-    return response.json();
+    return response?.json?.();
   }
 
-  return response;
+  return response?.arrayBuffer?.();
 };
 
 const getter = (socket) => store.get(socket);
@@ -128,9 +139,9 @@ const creater = (options = {}) => {
     store.delete(socket);
   });
 
-  socket.on('connect_error', () => {
+  socket.on('connect_error', (error) => {
     store.delete(socket);
-    promise.resolve(socket);
+    promise.reject(error);
   });
 
   socket.on(CONNECTION.CREATE, (source = {}) => {
@@ -154,9 +165,10 @@ const creater = (options = {}) => {
 
       const url = `${link}${originalUrl}`;
       const fetched = await fetch(url, combined);
+      const headers = await handleHeaders(fetched);
       const response = await handleResponse(fetched);
 
-      socket.emit(CONNECTION.RESPONSE, { beacon, response })
+      socket.emit(CONNECTION.RESPONSE, { beacon, headers, response })
     } catch (error) {
       console.error(error);
       socket.emit(CONNECTION.RESPONSE, { beacon, error });
