@@ -11,6 +11,8 @@ const CONNECTION = {
   RESPONSE: `${CONNECTION_PREFIX}_response`,
 };
 
+const SIMPLE_METHODS = ['GET', 'HEAD'];
+
 const store = new WeakMap();
 
 const createPromise = () => {
@@ -25,7 +27,7 @@ const createPromise = () => {
   return promise;
 };
 
-const createrFile = (source) => {
+const createFile = (source) => {
   if (!source) {
     return;
   }
@@ -48,8 +50,19 @@ const createrFile = (source) => {
   return file;
 };
 
-const createrBody = (source = {}) => {
-  const { type, body, files } = source;
+const createBody = (source = {}) => {
+  const {
+    type,
+    body,
+    files,
+    method,
+  } = source;
+
+  const simple = SIMPLE_METHODS.includes(method);
+
+  if (simple) {
+    return;
+  }
 
   if (type === 'multipart/form-data') {
     if (!files) {
@@ -65,7 +78,7 @@ const createrBody = (source = {}) => {
 
     entries.forEach((entry = []) => {
       const [key, value] = entry;
-      const result = createrFile(value) || value;
+      const result = createFile(value) || value;
 
       data.append(key, result);
     });
@@ -74,6 +87,20 @@ const createrBody = (source = {}) => {
   }
 
   return body;
+};
+
+const handleResponse = (response) => {
+  const type = response?.headers?.get?.('content-type');
+
+  if (type?.includes('text/')) {
+    return response.text();
+  }
+
+  if (type?.includes('/json')) {
+    return response.json();
+  }
+
+  return response;
 };
 
 const getter = (socket) => store.get(socket);
@@ -108,6 +135,7 @@ const creater = (options = {}) => {
 
   socket.on(CONNECTION.CREATE, (source = {}) => {
     store.set(socket, source);
+    promise.resolve(socket);
   });
 
   socket.on(CONNECTION.REQUEST, async (source = {}) => {
@@ -115,12 +143,18 @@ const creater = (options = {}) => {
       beacon,
       method,
       headers,
+      originalUrl,
     } = source;
 
     try {
-      const body = createrBody(source);
-      const combined = { headers, method, body };
-      const response = await fecth(link, combined);
+      const body = createBody(source);
+      const combined = { headers, method };
+
+      body && Object.assign(combined, { body });
+
+      const url = `${link}${originalUrl}`;
+      const fetched = await fetch(url, combined);
+      const response = await handleResponse(fetched);
 
       socket.emit(CONNECTION.RESPONSE, { beacon, response })
     } catch (error) {
