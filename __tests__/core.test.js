@@ -37,7 +37,7 @@ const createrMock = (socket = {}) => (options) => {
     const [event, callback] = args;
 
     if (event === CONNECTION.CREATE) {
-      callback(created);
+      setTimeout(() => callback(created));
     }
 
     socket[event] = callback;
@@ -97,6 +97,40 @@ test('Resolve after create', async () => {
 
   expect(socket).toBe(result);
   expect(getter(socket)).toBe(created);
+});
+
+test('Reject after create', async () => {
+  const error = new Error('test');
+  const options = { server, port };
+
+  const socket = {
+    on: (event, callback) => {
+      if (event === CONNECT_ERROR) {
+        callback(error);
+      }
+    },
+  };
+
+  try {
+    await createrMock(socket)(options);
+  } catch (caught) {
+    expect(caught).toBe(error);
+  }
+});
+
+test('Disconnect after create', async () => {
+  const created = {};
+  const socket = { created };
+  const options = { server, port };
+
+  const result = await createrMock(socket)(options);
+
+  expect(socket).toBe(result);
+  expect(getter(socket)).toBe(created);
+
+  result[DISCONNECT]();
+
+  expect(getter(socket)).toBe(undefined);
 });
 
 test('Passoul support request with port', async () => {
@@ -359,3 +393,25 @@ test('Passoul pass get buffer response', async () => {
   expect(emit.mock.calls[0][0]).toBe(CONNECTION.RESPONSE);
   expect(emit.mock.calls[0][1]).toEqual({ beacon, headers, response });
 });
+
+test('Passoul pass get error response', async () => {
+  const beacon = '@@BEACON';
+  const options = { server, href };
+  const object = { beacon, originalUrl };
+  const link = `${href}${originalUrl}`;
+  
+  const emit = jest.fn();
+  const error = new Error('test');
+  const socket = await createrMock({ emit })(options);
+
+  fetch.mockReturnValue(Promise.reject(error));
+  await socket[CONNECTION.REQUEST](object);
+
+  expect(fetch.mock.calls).toHaveLength(1);
+  expect(fetch.mock.calls[0][0]).toBe(link);
+
+  expect(emit.mock.calls).toHaveLength(1);
+  expect(emit.mock.calls[0][0]).toBe(CONNECTION.RESPONSE);
+  expect(emit.mock.calls[0][1]).toEqual({ beacon, error });
+});
+
