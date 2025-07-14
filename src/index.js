@@ -1,17 +1,13 @@
 import fetch from 'node-fetch';
-import { io } from "socket.io-client";
+import { io } from 'socket.io-client';
 
-const LOCAL = 'http://localhost';
-
-const CONNECTION_PREFIX = 'connection';
-
-const CONNECTION = {
-  CREATE: `${CONNECTION_PREFIX}_create`,
-  REQUEST: `${CONNECTION_PREFIX}_request`,
-  RESPONSE: `${CONNECTION_PREFIX}_response`,
-};
-
-const SIMPLE_METHODS = ['GET', 'HEAD'];
+import {
+  LOCAL,
+  CONNECTION,
+  SIMPLE_METHODS,
+  DISCONNECT,
+  CONNECT_ERROR,
+} from './constants.js';
 
 const store = new WeakMap();
 
@@ -65,12 +61,12 @@ const createBody = (source = {}) => {
   }
 
   if (type === 'multipart/form-data') {
-    if (!files) {
+    if (!files && !body) {
       return body;
     }
 
-    const b = body || {};
     const a = files || {};
+    const b = body || {};
 
     const data = new FormData();
     const source = { ...a, ...b };
@@ -91,15 +87,16 @@ const createBody = (source = {}) => {
 
 const createOptions = (source = {}) => {
   const {
-    beacon,
     method,
     headers,
     originalUrl,
   } = source;
 
+  const combined = {};
   const body = createBody(source);
-  const combined = { headers, method };
 
+  headers && Object.assign(combined, { headers });
+  method && Object.assign(combined, { method });
   body && Object.assign(combined, { body });
 
   return combined;
@@ -151,11 +148,11 @@ const creater = (options = {}) => {
   const promise = createPromise();
   const link = href ? href : `${LOCAL}:${port}`;
 
-  socket.on('disconnect', () => {
+  socket.on(DISCONNECT, () => {
     store.delete(socket);
   });
 
-  socket.on('connect_error', (error) => {
+  socket.on(CONNECT_ERROR, (error) => {
     store.delete(socket);
     promise.reject(error);
   });
@@ -166,10 +163,14 @@ const creater = (options = {}) => {
   });
 
   socket.on(CONNECTION.REQUEST, async (source = {}) => {
-    const { beacon, originalUrl } = source;
+    const {
+      beacon,
+      originalUrl = '',
+      search = '',
+    } = source;
 
     try {
-      const url = `${link}${originalUrl}`;
+      const url = `${link}${originalUrl}${search}`;
       const options = createOptions(source);
 
       const fetched = await fetch(url, options);

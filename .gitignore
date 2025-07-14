@@ -4,6 +4,7 @@ logs
 
 out
 dist
+coverage
 node_modules
 
 .env
