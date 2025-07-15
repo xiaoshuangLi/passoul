@@ -15,8 +15,9 @@ import creater, { getter } from '../src/index.js';
 const server = 'http://baidu.com';
 const href = 'http://test.com';
 const port = 8080;
-const originalUrl = '/original-url';
 const search = '?a=b';
+const pathname = '/pathname';
+const originalUrl = `${pathname}${search}`;
 
 const ioMock = (socket) => {
   io.mockReturnValue(socket);
@@ -160,7 +161,7 @@ test('Passoul pass request with originalUrl and search', async () => {
   const object = { originalUrl, search };
   
   const socket = await createrMock()(options);
-  const link = `${href}${originalUrl}${search}`
+  const link = `${href}${originalUrl}`;
 
   await socket[CONNECTION.REQUEST](object);
 
@@ -177,7 +178,7 @@ test('Passoul pass get request', async () => {
   const object = { ...basic, ...extra, body };
   
   const socket = await createrMock()(options);
-  const link = `${href}${originalUrl}${search}`
+  const link = `${href}${originalUrl}`
 
   await socket[CONNECTION.REQUEST](object);
 
@@ -195,7 +196,7 @@ test('Passoul pass post request', async () => {
   const object = { ...basic, ...extra };
   
   const socket = await createrMock()(options);
-  const link = `${href}${originalUrl}${search}`
+  const link = `${href}${originalUrl}`
 
   await socket[CONNECTION.REQUEST](object);
 
@@ -214,7 +215,7 @@ test('Passoul pass post form request with body', async () => {
   const object = { ...basic, ...extra };
   
   const socket = await createrMock()(options);
-  const link = `${href}${originalUrl}${search}`
+  const link = `${href}${originalUrl}`
 
   await socket[CONNECTION.REQUEST](object);
 
@@ -250,7 +251,7 @@ test('Passoul pass post form request with files', async () => {
   const object = { ...basic, ...extra };
   
   const socket = await createrMock()(options);
-  const link = `${href}${originalUrl}${search}`
+  const link = `${href}${originalUrl}`
 
   await socket[CONNECTION.REQUEST](object);
 
@@ -292,7 +293,7 @@ test('Passoul pass post form request with files and body', async () => {
   const object = { ...basic, ...extra };
   
   const socket = await createrMock()(options);
-  const link = `${href}${originalUrl}${search}`
+  const link = `${href}${originalUrl}`
 
   await socket[CONNECTION.REQUEST](object);
 

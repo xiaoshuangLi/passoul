@@ -166,11 +166,10 @@ const creater = (options = {}) => {
     const {
       beacon,
       originalUrl = '',
-      search = '',
     } = source;
 
     try {
-      const url = `${link}${originalUrl}${search}`;
+      const url = `${link}${originalUrl}`;
       const options = createOptions(source);
 
       const fetched = await fetch(url, options);
